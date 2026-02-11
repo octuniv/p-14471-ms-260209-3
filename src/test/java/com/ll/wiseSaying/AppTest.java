@@ -115,4 +115,53 @@ public class AppTest {
                 .contains("1 / 수정된 명언의 저자 / 수정된 명언의 내용");
 
     }
+
+    @Test
+    @DisplayName("목록, 검색 기능 테스트")
+    void searchList() throws Exception {
+        TestIOHandler io = new TestIOHandler(
+                "등록",
+                "현재를 사랑하라.",
+                "작자미상",
+                "등록",
+                "과거에 집착하지 마라.",
+                "작자미상",
+                "목록?keywordType=content&keyword=과거",
+                "목록?keywordType=author&keyword=작자",
+                "종료"
+        );
+        try (
+                JSONConverter converter = new DummyJsonConverter();
+                App app = new App(io, converter);
+        ) {
+            app.run();
+        }
+
+        List<String> outputs = io.getOutputs();
+
+        // 등록 성공 메시지 검증
+        assertThat(outputs).contains("1번 명언이 등록되었습니다.")
+                .contains("2번 명언이 등록되었습니다.");
+
+        // 첫 번째 검색 (content 기반) 결과 검증
+        assertThat(outputs).contains("검색타입 : content")
+                .contains("검색어 : 과거")
+                .contains("2 / 작자미상 / 과거에 집착하지 마라."); // 첫 검색엔 포함되지 않아야 함
+
+        // 두 번째 검색 (author 기반) 결과 검증 - 역순 정렬 확인
+        assertThat(outputs).contains("검색타입 : author")
+                .contains("검색어 : 작자")
+                .containsSequence(
+                        "2 / 작자미상 / 과거에 집착하지 마라.",
+                        "1 / 작자미상 / 현재를 사랑하라."
+                );
+
+        // 첫 번째 명언이 첫 번째 검색 결과에는 없고, 두 번째 검색 결과에만 존재함을 확인
+        int firstQuoteIndex = outputs.indexOf("1 / 작자미상 / 현재를 사랑하라.");
+        int secondSearchStartIndex = outputs.indexOf("검색타입 : author");
+
+        assertThat(firstQuoteIndex)
+                .isGreaterThan(secondSearchStartIndex);
+    }
+
 }

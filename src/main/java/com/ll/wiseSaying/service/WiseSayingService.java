@@ -2,6 +2,7 @@ package com.ll.wiseSaying.service;
 
 import com.ll.wiseSaying.entity.WiseSaying;
 import com.ll.wiseSaying.repository.WiseSayingRepository;
+import com.ll.wiseSaying.utils.WiseSayingRequester;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -15,8 +16,10 @@ public class WiseSayingService {
         return repository.create(body, author);
     }
 
-    public List<WiseSaying> findListDesc() {
-        return repository.findByInstancesDesc();
+    public List<WiseSaying> findListDesc(WiseSayingRequester rq) {
+        String keyType = rq.getParam("keywordType", "");
+        if (keyType.isEmpty()) return repository.findByInstancesDesc();
+        return WiseSayingRepository.filteredInstancesWithSearchParam(repository.findByInstancesDesc(), rq);
     }
 
     public boolean remove(int id) {

@@ -155,7 +155,7 @@ public class FileJsonConverterTest {
         assertThat(outputs)
                 .containsSequence(
                         "번호 / 작가 / 명언",
-                        "----------------------",  // ID 오름차순 정렬 가정
+                        "----------------------",
                         "2 / 작자미상 / 과거에 집착하지 마라.",
                         "1 / 작자미상 / 현재를 사랑하라."
                         );

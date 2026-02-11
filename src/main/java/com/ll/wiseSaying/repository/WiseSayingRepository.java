@@ -1,6 +1,7 @@
 package com.ll.wiseSaying.repository;
 
 import com.ll.wiseSaying.entity.WiseSaying;
+import com.ll.wiseSaying.utils.WiseSayingRequester;
 import standard.util.jsonmanager.JSONConverter;
 
 import java.util.ArrayList;
@@ -34,6 +35,14 @@ public class WiseSayingRepository {
 
     public List<WiseSaying> findByInstancesDesc() {
         return wiseSayings.reversed();
+    }
+
+    public static List<WiseSaying> filteredInstancesWithSearchParam(List<WiseSaying> original, WiseSayingRequester rq)
+    throws IllegalArgumentException {
+        String keyType = rq.getParam("keywordType", "");
+        if (keyType.isEmpty()) throw new IllegalArgumentException("SearchParam does not exists!");
+        String key = rq.getParam("keyword", "");
+        return original.stream().filter(w -> w.contain(keyType, key)).toList();
     }
 
     public Optional<WiseSaying> getInstanceById(int id) {

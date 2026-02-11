@@ -27,8 +27,9 @@ public class WiseSayingController {
         io.println("%d번 명언이 등록되었습니다.".formatted(wise.getId()));
     }
 
-    public void list() {
-        List<WiseSaying> wises = service.findListDesc();
+    public void list(WiseSayingRequester rq) {
+        this.searchParamView(rq);
+        List<WiseSaying> wises = service.findListDesc(rq);
         io.println("번호 / 작가 / 명언");
         io.println("----------------------");
         wises.forEach(wise -> io.println(
@@ -38,6 +39,17 @@ public class WiseSayingController {
                         wise.getBody()
                 )
         ));
+    }
+
+    private void searchParamView(WiseSayingRequester rq) {
+        String keyType = rq.getParam("keywordType", "");
+        if (!keyType.isEmpty()) {
+            String key = rq.getParam("keyword", "");
+            io.println("----------------------");
+            io.println("검색타입 : %s".formatted(keyType));
+            io.println("검색어 : %s".formatted(key));
+            io.println("----------------------");
+        }
     }
 
     public void remove(WiseSayingRequester rq) throws IllegalArgumentException {

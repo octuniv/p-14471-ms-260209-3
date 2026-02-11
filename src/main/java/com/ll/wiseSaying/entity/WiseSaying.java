@@ -48,4 +48,17 @@ public class WiseSaying {
                 String.valueOf(jsonParam.get("author"))
         );
     }
+
+    public boolean contain(String keyName, String param) {
+        switch (keyName) {
+            case "content" -> {
+                return body.contains(param);
+            }
+            case "author" -> {
+                return author.contains(param);
+            }
+        }
+        return false;
+    }
+
 }

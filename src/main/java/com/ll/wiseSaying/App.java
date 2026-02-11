@@ -39,7 +39,7 @@ public class App implements AutoCloseable{
                     this.controller.register();
                     break;
                 case "목록":
-                    this.controller.list();
+                    this.controller.list(rq);
                     break;
                 case "삭제":
                     this.controller.remove(rq);
