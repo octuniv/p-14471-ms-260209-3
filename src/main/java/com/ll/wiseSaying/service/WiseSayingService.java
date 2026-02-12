@@ -1,11 +1,11 @@
 package com.ll.wiseSaying.service;
 
 import com.ll.wiseSaying.entity.WiseSaying;
+import com.ll.wiseSaying.entity.WiseSayingPageDto;
 import com.ll.wiseSaying.repository.WiseSayingRepository;
 import com.ll.wiseSaying.utils.WiseSayingRequester;
 import lombok.RequiredArgsConstructor;
 
-import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -16,10 +16,12 @@ public class WiseSayingService {
         return repository.create(body, author);
     }
 
-    public List<WiseSaying> findListDesc(WiseSayingRequester rq) {
+    public WiseSayingPageDto findListDesc(WiseSayingRequester rq) {
         String keyType = rq.getParam("keywordType", "");
-        if (keyType.isEmpty()) return repository.findByInstancesDesc();
-        return WiseSayingRepository.filteredInstancesWithSearchParam(repository.findByInstancesDesc(), rq);
+        return WiseSayingRepository.getWiseSayingDto(
+                WiseSayingRepository.filteredInstancesWithSearchParam(repository.findByInstancesDesc(), rq),
+                rq
+        );
     }
 
     public boolean remove(int id) {

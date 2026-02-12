@@ -1,6 +1,7 @@
 package com.ll.wiseSaying.repository;
 
 import com.ll.wiseSaying.entity.WiseSaying;
+import com.ll.wiseSaying.entity.WiseSayingPageDto;
 import com.ll.wiseSaying.utils.WiseSayingRequester;
 import standard.util.jsonmanager.JSONConverter;
 
@@ -37,12 +38,21 @@ public class WiseSayingRepository {
         return wiseSayings.reversed();
     }
 
-    public static List<WiseSaying> filteredInstancesWithSearchParam(List<WiseSaying> original, WiseSayingRequester rq)
-    throws IllegalArgumentException {
+    public static List<WiseSaying> filteredInstancesWithSearchParam(List<WiseSaying> original, WiseSayingRequester rq) {
         String keyType = rq.getParam("keywordType", "");
-        if (keyType.isEmpty()) throw new IllegalArgumentException("SearchParam does not exists!");
+        if (keyType.isEmpty()) return original;
         String key = rq.getParam("keyword", "");
         return original.stream().filter(w -> w.contain(keyType, key)).toList();
+    }
+
+    public static WiseSayingPageDto getWiseSayingDto(List<WiseSaying> original, WiseSayingRequester rq) {
+        if (original.isEmpty()) return new WiseSayingPageDto(0, 0, original);
+        int page = rq.getParamAsInt("page", 1);
+        int lastPage = (int) Math.ceil((double) original.size() / 5);
+        if (page > lastPage) page = lastPage;
+        return new WiseSayingPageDto(
+                page, lastPage, original.stream().skip(5L * (page - 1)).limit(5).toList()
+        );
     }
 
     public Optional<WiseSaying> getInstanceById(int id) {
@@ -62,5 +72,4 @@ public class WiseSayingRepository {
         });
         this.writeFile();
     }
-
 }

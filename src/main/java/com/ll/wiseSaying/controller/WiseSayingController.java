@@ -1,5 +1,6 @@
 package com.ll.wiseSaying.controller;
 
+import com.ll.wiseSaying.entity.WiseSayingPageDto;
 import com.ll.wiseSaying.iohandler.IOHandler;
 import com.ll.wiseSaying.entity.WiseSaying;
 import com.ll.wiseSaying.service.WiseSayingService;
@@ -8,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RequiredArgsConstructor
 public class WiseSayingController {
@@ -29,10 +32,16 @@ public class WiseSayingController {
 
     public void list(WiseSayingRequester rq) {
         this.searchParamView(rq);
-        List<WiseSaying> wises = service.findListDesc(rq);
+        WiseSayingPageDto wiseDto = service.findListDesc(rq);
+        List<WiseSaying> wiseList = wiseDto.getPagedWises();
+        this.wiseListView(wiseList);
+        this.pageView(wiseDto);
+    }
+
+    private void wiseListView(List<WiseSaying> wiseList) {
         io.println("번호 / 작가 / 명언");
         io.println("----------------------");
-        wises.forEach(wise -> io.println(
+        wiseList.forEach(wise -> io.println(
                 "%d / %s / %s".formatted(
                         wise.getId(),
                         wise.getAuthor(),
@@ -50,6 +59,22 @@ public class WiseSayingController {
             io.println("검색어 : %s".formatted(key));
             io.println("----------------------");
         }
+    }
+
+    private void pageView(WiseSayingPageDto wiseDto) {
+        int page = wiseDto.getPresentPage();
+        int lastPage = wiseDto.getLastPage();
+        if (lastPage == 0) return;
+        io.println("----------------------");
+        io.println(IntStream.rangeClosed(1, lastPage)
+                .mapToObj(i -> {
+                    StringBuilder ret = new StringBuilder();
+                    if (i == 1) ret.append("페이지 : ");
+                    if (i == page) ret.append("[%d]".formatted(i));
+                    else ret.append("%d".formatted(i));
+                    if (i != lastPage) ret.append(" / ");
+                    return ret.toString();
+                }).collect(Collectors.joining()));
     }
 
     public void remove(WiseSayingRequester rq) throws IllegalArgumentException {

@@ -1,16 +1,21 @@
 package com.ll.wiseSaying;
 
-import jsonmanager.DummyJsonConverter;
 import com.ll.wiseSaying.iohandler.TestIOHandler;
+import jsonmanager.DummyJsonConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import standard.util.jsonmanager.FileJSONConverter;
 import standard.util.jsonmanager.JSONConverter;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.IntStream;
 
+import static java.util.Collections.frequency;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AppTest {
+    private static final String testPath = "db/test";
     @Test
     @DisplayName("명령 : 등록")
     void registerTest() throws Exception {
@@ -33,7 +38,7 @@ public class AppTest {
     }
 
     @Test
-    @DisplayName("명령 : 목록")
+    @DisplayName("명령 : 목록, 기본 페이징")
     void listTest() throws Exception {
         TestIOHandler io = new TestIOHandler(
                 "등록",
@@ -55,7 +60,8 @@ public class AppTest {
         assertThat(outputs).contains("번호 / 작가 / 명언")
                 .contains("----------------------")
                 .contains("2 / 작자미상 / 과거에 집착하지 마라.")
-                .contains("1 / 작자미상 / 현재를 사랑하라.");
+                .contains("1 / 작자미상 / 현재를 사랑하라.")
+                .contains("페이지 : [1]");
     }
 
     @Test
@@ -162,6 +168,89 @@ public class AppTest {
 
         assertThat(firstQuoteIndex)
                 .isGreaterThan(secondSearchStartIndex);
+    }
+
+    @Test
+    @DisplayName("명령 : 목록, 페이징 리스트 출력")
+    void pagedListTest() throws Exception {
+        TestIOHandler io = new TestIOHandler(
+                "목록",
+                "목록?page=2",
+                "종료"
+        );
+        List<Map<String, Object>> wises = IntStream.rangeClosed(1, 10)
+                .mapToObj(i -> Map.<String, Object>of(
+                        "id", i,
+                        "author", "작자미상 %d".formatted(i),
+                        "body", "명언 %d".formatted(i)))
+                .toList();
+        try (JSONConverter converter= new FileJSONConverter(true, testPath);) {
+            converter.writeFile(wises);
+            App app = new App(io, converter);
+            app.run();
+            app.close();
+        }
+
+        List<String> outputs = io.getOutputs();
+
+        List<String> allWisdomLines = IntStream.rangeClosed(1, 10)
+                .mapToObj(i -> "%d / 작자미상 %d / 명언 %d".formatted(i, i, i))
+                .toList();
+
+        allWisdomLines.forEach(line ->
+                assertThat(frequency(outputs, line))
+                        .as("명언 '%s'는 정확히 1회만 등장해야 함", line)
+                        .isEqualTo(1)
+        );
+
+        assertThat(outputs).containsSequence(
+                "번호 / 작가 / 명언",
+                "----------------------",
+                "10 / 작자미상 10 / 명언 10",
+                "9 / 작자미상 9 / 명언 9",
+                "8 / 작자미상 8 / 명언 8",
+                "7 / 작자미상 7 / 명언 7",
+                "6 / 작자미상 6 / 명언 6",
+                "----------------------",
+                "페이지 : [1] / 2"
+        );
+
+        assertThat(outputs).containsSequence(
+                "번호 / 작가 / 명언",
+                "----------------------",
+                "5 / 작자미상 5 / 명언 5",
+                "4 / 작자미상 4 / 명언 4",
+                "3 / 작자미상 3 / 명언 3",
+                "2 / 작자미상 2 / 명언 2",
+                "1 / 작자미상 1 / 명언 1",
+                "----------------------",
+                "페이지 : 1 / [2]"
+        );
+
+        int idxPage1Last = outputs.indexOf("6 / 작자미상 6 / 명언 6");
+        int idxPage2First = outputs.indexOf("5 / 작자미상 5 / 명언 5");
+        assertThat(idxPage1Last)
+                .as("페이지 1의 마지막 명언(6번)은 페이지 2의 첫 명언(5번)보다 앞에 있어야 함")
+                .isLessThan(idxPage2First);
+    }
+
+    @Test
+    @DisplayName("명령 : 목록, 빈 목록")
+    void emptyList() throws Exception {
+        TestIOHandler io = new TestIOHandler(
+                "목록",
+                "종료"
+        );
+
+        try (
+                JSONConverter converter= new DummyJsonConverter();
+                App app = new App(io, converter);) {
+            app.run();
+        }
+
+        List<String> outputs = io.getOutputs();
+        assertThat(outputs)
+                .noneMatch(output -> output.matches(".*페이지 : \\d+ / \\[\\d+\\].*"));
     }
 
 }
